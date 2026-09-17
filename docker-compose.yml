@@ -10,7 +10,7 @@
       - POSTGRES_DB=ewm-stats
     volumes:
       - stats-db-data:/var/lib/postgresql/data/
-      - ./stat/stat-server/src/main/resources/schema-stat.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./core/main-service/src/main/resources/schema-main.sql:/docker-entrypoint-initdb.d/01-init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stat -d ewm-stats"]
       timeout: 5s
@@ -52,7 +52,7 @@
     restart: on-failure
 
   ewm-service:
-    build: ./main-service
+    build: ./core/main-service
     container_name: ewm-service
     ports:
       - "8080:8080"

@@ -81,6 +81,4 @@ public class UserEventsController {
 
         return requestService.updateOwnParticipationRequests(userId, eventId, request);
     }
-
-
 }
