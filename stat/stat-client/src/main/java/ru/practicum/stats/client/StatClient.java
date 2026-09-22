@@ -103,19 +103,19 @@ public class StatClient {
         DateTimeFormatter formatter =
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        UriComponentsBuilder builder = UriComponentsBuilder
-                .fromUri(makeUri("/stats"))
-                .queryParam("start", start.format(formatter))
-                .queryParam("end", end.format(formatter))
-                .queryParam("unique", unique);
-
-        if (uris != null && !uris.isEmpty()) {
-            for (String uri : uris) {
-                builder.queryParam("uris", uri);
-            }
-        }
-
         try {
+            UriComponentsBuilder builder = UriComponentsBuilder
+                    .fromUri(makeUri("/stats"))
+                    .queryParam("start", start.format(formatter))
+                    .queryParam("end", end.format(formatter))
+                    .queryParam("unique", unique);
+
+            if (uris != null && !uris.isEmpty()) {
+                for (String uri : uris) {
+                    builder.queryParam("uris", uri);
+                }
+            }
+
             List<ViewStatsDto> stats = restClient.get()
                     .uri(builder.build().encode().toUri())
                     .retrieve()

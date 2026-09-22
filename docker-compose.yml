@@ -1,4 +1,6 @@
- services:
+services:
+  # STATS
+  # =============
   stats-db:
     image: postgres:16.1
     container_name: postgres-ewm-stats-db
@@ -10,7 +12,6 @@
       - POSTGRES_DB=ewm-stats
     volumes:
       - stats-db-data:/var/lib/postgresql/data/
-      - ./core/main-service/src/main/resources/schema-main.sql:/docker-entrypoint-initdb.d/01-init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stat -d ewm-stats"]
       timeout: 5s
@@ -30,42 +31,144 @@
       - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/ewm-stats
       - SPRING_DATASOURCE_USERNAME=stat
       - SPRING_DATASOURCE_PASSWORD=stat
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://host.docker.internal:8761/eureka/
     restart: on-failure
 
-  ewm-db:
+  # USER SERVICE
+
+  user-db:
     image: postgres:16.1
-    container_name: postgres-ewm-main-db
+    container_name: postgres-ewm-user-db
     ports:
-      - "6541:5432"
+      - "6543:5432"
     environment:
-      - POSTGRES_USER=main
-      - POSTGRES_PASSWORD=main
-      - POSTGRES_DB=ewm-main
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_DB=ewm-user
     volumes:
-      - ewm-db-data:/var/lib/postgresql/data/
-      - ./main-service/src/main/resources/schema-main.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - user-db-data:/var/lib/postgresql/data/
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U main -d ewm-main" ]
+      test: ["CMD-SHELL", "pg_isready -U user -d ewm-user"]
       timeout: 5s
       interval: 5s
       retries: 10
     restart: on-failure
 
-  ewm-service:
-    build: ./core/main-service
-    container_name: ewm-service
-    ports:
-      - "8080:8080"
+  user-service:
+    build: ./core/user-module
+    container_name: user-service
     depends_on:
-      ewm-db:
+      user-db:
         condition: service_healthy
     environment:
-      - CLIENT_URL=http://stats-server:9090
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm-main
-      - SPRING_DATASOURCE_USERNAME=main
-      - SPRING_DATASOURCE_PASSWORD=main
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/ewm-user
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=user
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://host.docker.internal:8761/eureka/
     restart: on-failure
 
- volumes:
-   stats-db-data:
-   ewm-db-data:
+  # REQUEST SERVICE
+
+  request-db:
+    image: postgres:16.1
+    container_name: postgres-ewm-request-db
+    ports:
+      - "6544:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_DB=ewm-request
+    volumes:
+      - request-db-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d ewm-request"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+    restart: on-failure
+
+  request-service:
+    build: ./core/request-module
+    container_name: request-service
+    depends_on:
+      request-db:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://request-db:5432/ewm-request
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=user
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://host.docker.internal:8761/eureka/
+    restart: on-failure
+
+  # EVENT SERVICE
+
+  event-db:
+    image: postgres:16.1
+    container_name: postgres-ewm-event-db
+    ports:
+      - "6545:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_DB=ewm-event
+    volumes:
+      - event-db-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d ewm-event"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+    restart: on-failure
+
+  event-service:
+    build: ./core/event-module
+    container_name: event-service
+    depends_on:
+      event-db:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://event-db:5432/ewm-event
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=user
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://host.docker.internal:8761/eureka/
+    restart: on-failure
+
+  # COMPILATION SERVICE
+  compilation-db:
+    image: postgres:16.1
+    container_name: postgres-ewm-compilation-db
+    ports:
+      - "6546:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_DB=ewm-compilation
+    volumes:
+      - compilation-db-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d ewm-compilation"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+    restart: on-failure
+
+  compilation-service:
+    build: ./core/compilation-module
+    container_name: compilation-service
+    depends_on:
+      compilation-db:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://compilation-db:5432/ewm-compilation
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=user
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://host.docker.internal:8761/eureka/
+    restart: on-failure
+
+
+volumes:
+  stats-db-data:
+  user-db-data:
+  request-db-data:
+  event-db-data:
+  compilation-db-data:
