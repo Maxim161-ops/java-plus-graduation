@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>event-module</artifactId>
+    <artifactId>request-service</artifactId>
 
     <dependencies>
 
@@ -50,6 +50,12 @@
         </dependency>
 
         <dependency>
+            <groupId>ru.practicum</groupId>
+            <artifactId>interaction-api</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
@@ -71,17 +77,9 @@
         </dependency>
 
         <dependency>
-            <groupId>ru.practicum</groupId>
-            <artifactId>stat-client</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-okhttp</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>ru.practicum</groupId>
-            <artifactId>interaction-api</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-
     </dependencies>
 
     <build>
@@ -90,10 +88,9 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>ru.practicum.ewm.EventApplication</mainClass>
+                    <mainClass>ru.practicum.ewm.RequestApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>
