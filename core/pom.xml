@@ -16,7 +16,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>user-module</module>
+        <module>user-service</module>
         <module>request-module</module>
         <module>event-module</module>
         <module>compilation-module</module>
