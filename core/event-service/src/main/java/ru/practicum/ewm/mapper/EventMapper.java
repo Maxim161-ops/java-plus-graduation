@@ -11,7 +11,9 @@ public class EventMapper {
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public static EventFullDto toFullDto(Event event, Long views, UserResponse user) {
+    public static EventFullDto toFullDto(Event event,
+                                         Double rating,
+                                         UserResponse user) {
         return EventFullDto.builder()
                 .id(event.getId())
                 .paid(event.getPaid())
@@ -32,11 +34,13 @@ public class EventMapper {
                 .participantLimit(event.getParticipantLimit())
                 .requestModeration(event.getRequestModeration())
                 .annotation(event.getAnnotation())
-                .views(views == null ? 0L : views)
+                .rating(rating == null ? 0.0 : rating)
                 .build();
     }
 
-    public static EventShortDto toShortDto(Event event, Long views, UserResponse user) {
+    public static EventShortDto toShortDto(Event event,
+                                           Double rating,
+                                           UserResponse user) {
         return EventShortDto.builder()
                 .id(event.getId())
                 .paid(event.getPaid())
@@ -46,7 +50,7 @@ public class EventMapper {
                 .initiator(new UserShortDto(user.getId(), user.getName()))
                 .eventDate(event.getEventDate().format(FORMATTER))
                 .annotation(event.getAnnotation())
-                .views(views == null ? 0L : views)
+                .rating(rating == null ? 0.0 : rating)
                 .build();
     }
 }

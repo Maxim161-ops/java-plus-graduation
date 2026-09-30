@@ -1,5 +1,6 @@
 package ru.practicum.ewm.mapper;
 
+import ru.practicum.ewm.dto.CategoryDto;
 import ru.practicum.ewm.dto.CompilationDto;
 import ru.practicum.ewm.dto.EventShortDto;
 import ru.practicum.ewm.model.Compilation;
@@ -13,21 +14,21 @@ public class CompilationMapper {
     public static CompilationDto toCompilationDto(
             Compilation compilation,
             List<EventShortResponse> events,
-            Map<Long, Long> viewsMap) {
+            Map<Long, Double> ratingsMap) {
 
         return CompilationDto.builder()
                 .id(compilation.getId())
                 .title(compilation.getTitle())
                 .pinned(compilation.getPinned())
                 .events(events.stream()
-                        .map(event -> toEventShortDto(event, viewsMap))
+                        .map(event -> toEventShortDto(event, ratingsMap))
                         .toList())
                 .build();
     }
 
     private static EventShortDto toEventShortDto(
             EventShortResponse event,
-            Map<Long, Long> viewsMap) {
+            Map<Long, Double> ratingsMap) {
 
         return EventShortDto.builder()
                 .id(event.getId())
@@ -35,12 +36,12 @@ public class CompilationMapper {
                 .annotation(event.getAnnotation())
                 .eventDate(event.getEventDate())
                 .paid(event.getPaid())
-                .category(ru.practicum.ewm.dto.CategoryDto.builder()
+                .category(CategoryDto.builder()
                         .id(event.getCategoryId())
                         .name(event.getCategoryName())
                         .build())
                 .initiator(event.getInitiator())
-                .views(viewsMap.getOrDefault(event.getId(), 0L))
+                .rating(ratingsMap.getOrDefault(event.getId(), 0.0))
                 .confirmedRequests(event.getConfirmedRequests())
                 .build();
     }
