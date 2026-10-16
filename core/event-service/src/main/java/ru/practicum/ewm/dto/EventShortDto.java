@@ -15,7 +15,7 @@ public class EventShortDto {
     private Integer confirmedRequests;
     private CategoryDto category;
     private String eventDate;
-    private Long views;
+    private Double rating;
     private UserShortDto initiator;
     private Boolean paid;
 }

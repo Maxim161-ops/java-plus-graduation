@@ -18,10 +18,9 @@ import ru.practicum.ewm.model.Compilation;
 import ru.practicum.ewm.model.QCompilation;
 import ru.practicum.interaction.client.EventClient;
 import ru.practicum.interaction.dto.event.EventShortResponse;
-import ru.practicum.stats.client.StatClient;
-import ru.practicum.stats.dto.ViewStatsDto;
+import ru.practicum.stats.client.AnalyzerClient;
+import ru.practicum.ewm.stats.proto.RecommendedEventProto;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,8 +31,8 @@ import java.util.stream.Collectors;
 public class CompilationServiceImpl implements CompilationService {
 
     private final CompilationRepository compilationRepository;
-    private final StatClient statClient;
     private final EventClient eventClient;
+    private final AnalyzerClient analyzerClient;
 
     @Override
     @Transactional
@@ -105,13 +104,13 @@ public class CompilationServiceImpl implements CompilationService {
         Set<Long> eventIds = getEventIds(compilations);
 
         Map<Long, EventShortResponse> eventsById = getEventsById(eventIds);
-        Map<Long, Long> viewsByEventId = getViewsByEventId(eventIds);
+        Map<Long, Double> ratingsByEventId = getRatingsByEventId(eventIds);
 
         return compilations.stream()
                 .map(compilation -> toDto(
                         compilation,
                         eventsById,
-                        viewsByEventId
+                        ratingsByEventId
                 ))
                 .toList();
     }
@@ -136,38 +135,15 @@ public class CompilationServiceImpl implements CompilationService {
         return predicate == null ? compilation.isNotNull() : predicate;
     }
 
-    private Map<Long, Long> getStatsByUris(List<String> uris) {
 
-        List<ViewStatsDto> stats = statClient.getStat(
-                LocalDateTime.of(2000, 1, 1, 0, 0),
-                LocalDateTime.now(),
-                uris,
-                false
-        );
-
-        if (stats == null || stats.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        Map<Long, Long> viewsMap = new LinkedHashMap<>();
-        for (ViewStatsDto dto : stats) {
-            String uri = dto.getUri();
-            Long id = Long.parseLong(
-                    uri.substring(
-                            uri.lastIndexOf('/') + 1));
-            viewsMap.put(id, dto.getHits());
-        }
-
-        return viewsMap;
-    }
 
     private CompilationDto getDto(Compilation compilation) {
         Set<Long> eventIds = compilation.getEventIds();
 
         Map<Long, EventShortResponse> eventsById = getEventsById(eventIds);
-        Map<Long, Long> viewsByEventId = getViewsByEventId(eventIds);
+        Map<Long, Double> ratingsByEventId = getRatingsByEventId(eventIds);
 
-        return toDto(compilation, eventsById, viewsByEventId);
+        return toDto(compilation, eventsById, ratingsByEventId);
     }
 
 
@@ -205,22 +181,23 @@ public class CompilationServiceImpl implements CompilationService {
                 ));
     }
 
-    private Map<Long, Long> getViewsByEventId(Set<Long> eventIds) {
+    private Map<Long, Double> getRatingsByEventId(Set<Long> eventIds) {
         if (eventIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        List<String> uris = eventIds.stream()
-                .map(eventId -> "/events/" + eventId)
-                .toList();
-
-        return getStatsByUris(uris);
+        return analyzerClient
+                .getInteractionsCount(new ArrayList<>(eventIds))
+                .collect(Collectors.toMap(
+                        RecommendedEventProto::getEventId,
+                        RecommendedEventProto::getScore
+                ));
     }
 
     private CompilationDto toDto(
             Compilation compilation,
             Map<Long, EventShortResponse> eventsById,
-            Map<Long, Long> viewsByEventId) {
+            Map<Long, Double> ratingsByEventId) {
 
         List<EventShortResponse> events = compilation.getEventIds()
                 .stream()
@@ -231,7 +208,7 @@ public class CompilationServiceImpl implements CompilationService {
         return CompilationMapper.toCompilationDto(
                 compilation,
                 events,
-                viewsByEventId
+                ratingsByEventId
         );
     }
 }

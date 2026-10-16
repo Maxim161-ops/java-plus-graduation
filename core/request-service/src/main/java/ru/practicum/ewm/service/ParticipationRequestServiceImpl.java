@@ -19,6 +19,9 @@ import ru.practicum.interaction.client.EventClient;
 import ru.practicum.interaction.client.UserClient;
 import ru.practicum.interaction.dto.event.ConfirmedRequestsUpdateRequest;
 import ru.practicum.interaction.dto.event.EventResponse;
+import ru.practicum.stats.client.CollectorClient;
+import ru.practicum.ewm.stats.proto.ActionTypeProto;
+
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,6 +40,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
     private final UserClient userClient;
     private final EventClient eventClient;
+    private final CollectorClient collectorClient;
 
     @Override
     public List<ParticipationRequestDto> getRequestsByEventId(long ownerId, long eventId) {
@@ -273,6 +277,13 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 request.getCreated());
 
         request = requestRepository.save(request);
+
+// Отправляем информацию о регистрации в Collector
+        collectorClient.sendUserAction(
+                userId,
+                eventId,
+                ActionTypeProto.ACTION_REGISTER
+        );
 
         log.info(
                 "request saved with id: {}",
